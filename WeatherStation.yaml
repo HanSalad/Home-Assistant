@@ -1,0 +1,166 @@
+i2c:
+  - id: bus_a
+  
+spi:
+  clk_pin: GPIO18
+  mosi_pin: GPIO23
+  miso_pin: GPIO19
+  
+as3935_spi:
+  cs_pin: GPIO25
+  irq_pin: GPIO17
+  
+
+
+sensor:
+
+  - platform: wifi_signal
+    name: " WS WiFi Strength"
+    update_interval: 60s
+
+  - platform: adc
+    pin: GPIO34
+    name: "WV soil Moisture"
+    id: WVsoil_Moisture
+    filters:
+      - throttle: 30s
+    
+  - platform: adc
+    pin: GPIO35
+    name: "Wind Direction"
+    id: WVwind_vane
+    filters:
+      - throttle: 30s
+      
+  - platform: pulse_counter
+    pin: GPIO14
+    id: wind_pulses
+    name: "WS Wind Pulses"
+    #count_mode:
+      #rising_edge: INCREMENT
+      #falling_edge: INCREMENT
+    total:
+      name: "WS total pulse"
+    update_interval: 30s
+    
+  - platform: pulse_counter
+    pin: GPIO18
+    id: rain_pulses
+    name: "WS Rain Pulses"
+    #count_mode:
+      #rising_edge: INCREMENT
+      #falling_edge: INCREMENT
+    total:
+      name: "WS total pulse"
+    update_interval: 30s
+    
+    
+  - platform: bme280
+    temperature:
+      name: "BME280 Temperature"
+      id: bme280_temperature
+    pressure:
+      name: "BME280 Pressure"
+      id: bme280_pressure
+    humidity:
+      name: "BME280 Relative Humidity"
+      id: bme280_humidity
+    address: 0x77
+    update_interval: 180s
+    
+    
+  - platform: template
+    name: "Pressure"
+    lambda: |-
+      return ((id(bme280_pressure).state+45.2) / 33.863886666667);
+    update_interval: 180s
+    icon: 'mdi:signal'
+    unit_of_measurement: 'inHg'
+    
+    
+  - platform: template
+    name: "Altitude"
+    lambda: |-
+      const float STANDARD_SEA_LEVEL_PRESSURE = 1013.25; //in hPa, see note
+      return ((id(bme280_temperature).state + 273.15) / 0.0065) *
+        ((powf((STANDARD_SEA_LEVEL_PRESSURE / id(bme280_pressure).state), 0.190234) - 1)*3.281); // in meter
+    update_interval: 180s
+    icon: 'mdi:signal'
+    unit_of_measurement: 'ft'
+    
+    
+  - platform: template
+    name: "Absolute Humidity"
+    lambda: |-
+      const float mw = 18.01534;    // molar mass of water g/mol
+      const float r = 8.31447215;   // Universal gas constant J/mol/K
+      return (6.112 * powf(2.718281828, (17.67 * id(bme280_temperature).state) /
+        (id(bme280_temperature).state + 243.5)) * id(bme280_humidity).state * mw) /
+        ((273.15 + id(bme280_temperature).state) * r); // in grams/m^3
+    accuracy_decimals: 2
+    update_interval: 180s
+    icon: 'mdi:water'
+    unit_of_measurement: 'g/m³'
+    
+    
+  - platform: template
+    name: "Dew Point"
+    lambda: |-
+      return (243.5*(log(id(bme280_humidity).state/100)+((17.67*id(bme280_temperature).state)/
+      (243.5+id(bme280_temperature).state)))/(17.67-log(id(bme280_humidity).state/100)-
+      ((17.67*id(bme280_temperature).state)/(243.5+id(bme280_temperature).state))));
+    unit_of_measurement: °C
+    icon: 'mdi:thermometer-alert'
+    
+
+
+    
+    #Sunlight Sensor
+  - platform: ltr390
+    update_interval: 60s
+    gain: X1
+    uv:
+      name: "WS UV Level"
+      id: ltruv
+    light:
+      name: "WS Light"
+      id: ltrlx
+  
+  - platform: template
+    name: "WS UV Index"
+    lambda: |-
+      return (id(ltruv).state/40);
+    
+  - platform: ina3221
+    address: 0x40
+    channel_1:
+      shunt_resistance: 0.1 ohm
+      current:
+        name: "INA3221 Channel 1 Current"
+      power:
+        name: "INA3221 Channel 1 Power"
+      bus_voltage:
+        name: "INA3221 Channel 1 Bus Voltage"
+      shunt_voltage:
+        name: "INA3221 Channel 1 Shunt Voltage"
+    channel_2:
+      shunt_resistance: 0.1 ohm
+      current:
+        name: "INA3221 Channel 2 Current"
+      power:
+        name: "INA3221 Channel 2 Power"
+      bus_voltage:
+        name: "INA3221 Channel 2 Bus Voltage"
+      shunt_voltage:
+        name: "INA3221 Channel 2 Shunt Voltage"
+    channel_3:
+      shunt_resistance: 0.1 ohm
+      current:
+        name: "INA3221 Channel 3 Current"
+      power:
+        name: "INA3221 Channel 3 Power"
+      bus_voltage:
+        name: "INA3221 Channel 3 Bus Voltage"
+      shunt_voltage:
+        name: "INA3221 Channel 3 Shunt Voltage"
+    update_interval: 60s
