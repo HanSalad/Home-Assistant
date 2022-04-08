@@ -1,0 +1,84 @@
+esphome:
+  name: sprinkler-controller
+  includes:
+    - arduino_port_expander.h
+      
+      
+esp8266:
+  board: nodemcuv2
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+
+ota:
+  password: "b89d24192b75d2ccb2c0327e0a9adc17"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Sprinkler-Controller"
+    password: "rNeqIpH4ZwT8"
+
+captive_portal:
+
+i2c:
+  - id: bus_a
+    scl: D1
+    sda: D2
+    scan: true
+  
+custom_component:
+  - id: expander1
+    lambda: |-
+      auto expander = new ArduinoPortExpander(bus_a, 0x08, true);
+      return {expander}; 
+      
+      
+output:
+  - platform: custom
+    type: binary
+    lambda: |-
+        return {ape_binary_output(expander1, 2),
+                ape_binary_output(expander1, 3),
+                ape_binary_output(expander1, 4),
+                ape_binary_output(expander1, 5)};
+    
+    outputs:
+      - id: relay_1
+        inverted: true
+      - id: relay_2
+        inverted: true      
+      - id: relay_3
+        inverted: true
+      - id: relay_4
+        inverted: true
+        
+        
+switch:
+  - platform: output
+    name: Zone 1
+    output: relay_1
+    id: zone_1
+  - platform: output
+    name: Zone 2
+    output: relay_2
+    id: zone_2
+  - platform: output
+    name: Zone 3
+    output: relay_3
+    id: zone_3
+  - platform: output
+    name: Zone 4
+    output: relay_4
+    id: zone_4    
+    
+sensor:
+  - platform: wifi_signal
+    name: " SC WiFi Strength"
+    update_interval: 60s
