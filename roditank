@@ -1,0 +1,29 @@
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+
+ota:
+  password: "dd73b5aa2ae8f068df8731fb35d7b4ac"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Roditank Fallback Hotspot"
+    password: "5ufeX1beK5V4"
+
+captive_portal:
+  
+output:
+  - platform: gpio
+    pin: 14
+    id: 'PumpID'
+switch:
+  - platform: output
+    name: "RODI Pump"
+    output: 'PumpID'
+    restore_mode: RESTORE_DEFAULT_OFF
