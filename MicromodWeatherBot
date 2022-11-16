@@ -1,0 +1,108 @@
+esphome:
+  name: micromod-weathervane
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+
+
+ota:
+  password: ""
+
+wifi:
+  ssid: 
+  password: 
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Micromod-Weathervane"
+    password: ""
+
+captive_portal:
+
+i2c:
+  - id: bus_a
+  
+spi:
+  clk_pin: GPIO18
+  mosi_pin: GPIO23
+  miso_pin: GPIO19
+
+
+binary_sensor:
+  - platform: as3935
+    name: "Storm Alert"
+  
+as3935_spi:
+  cs_pin: GPIO16
+  irq_pin: GPIO17
+  
+sensor:
+  - platform: bme280
+    temperature:
+      name: "Weather Vane Temperature"
+      oversampling: 16x
+    pressure:
+      name: "Weather Vane Pressure"
+    humidity:
+      name: "Weather Vane Humidity"
+    address: 0x77
+    update_interval: 60s
+    
+  - platform: as3935
+    lightning_energy:
+      name: "Lightning Energy"
+    distance:
+      name: "Distance Storm"
+    
+    
+  - platform: wifi_signal
+    name: " Wv WiFi Strength"
+    update_interval: 60s
+
+  - platform: pulse_counter
+    pin: GPIO14
+    name: "WV wind Pulse Counter"
+    id: AnemometerPulse
+    filters:
+      - multiply: 0.01664
+      
+  - platform: pulse_counter
+    pin: GPIO27
+    name: "WV Rain Pulse Counter"
+    id: RainGaugepulse
+    filters:
+      - multiply: 0.06
+    total:
+      name: "Total Rain"
+      unit_of_measurement: "inches"
+      accuracy_decimals: 3
+      filters:
+        - multiply: 0.011
+
+
+  - platform: adc
+    pin: GPIO35
+    name: "Wind Vane voltage"
+    update_interval: 10s
+    attenuation: auto
+    id: wind_vane_voltage
+    
+
+      
+  - platform: template
+    name: "Wind Speed"
+    unit_of_measurement: mph
+    lambda: |-
+      return (id(AnemometerPulse).state*2.73);
+
+
+
+
